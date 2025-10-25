@@ -1,13 +1,14 @@
 import React from 'react';
 import { useNetwork } from '../../hooks/useNetwork';
 import { WifiStatusIcon } from '../icons/WifiStatusIcon';
+import AskAiSearch from '../ui/AskAiSearch';
 
 const Header: React.FC = () => {
   const { isOnline, toggleNetworkStatus } = useNetwork();
 
   return (
     <header className="flex-shrink-0 bg-secondary h-16 flex items-center justify-between px-4 border-b border-border-color">
-      <h1 className="text-xl font-bold text-text-primary tracking-wider">MAZDADY</h1>
+      <AskAiSearch />
       
       {/* Network Status Simulator */}
       <div className="flex items-center space-x-2" title="Simulate network connection going online/offline">

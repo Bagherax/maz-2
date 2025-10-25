@@ -33,6 +33,7 @@
  *
  * The functions in this file simulate the output of these on-device models.
  */
+import { GoogleGenAI, Type } from "@google/genai";
 
 interface AdGenerationResult {
     title: string;
@@ -132,4 +133,97 @@ export const getSearchVector = async (query: string): Promise<number[]> => {
     
     console.log("Generated vector:", vector);
     return vector;
+};
+
+/**
+ * Submits a general query to the Gemini AI for a quick answer.
+ * @param prompt The user's question.
+ * @returns A promise that resolves to the AI's text response.
+ */
+export const askAi = async (prompt: string): Promise<string> => {
+    if (!process.env.API_KEY) {
+        throw new Error("API_KEY environment variable not set");
+    }
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+            systemInstruction: "You are a helpful assistant for the MAZDADY P2P marketplace. Answer user questions concisely and clearly in 1-2 sentences.",
+        },
+    });
+    return response.text;
+};
+
+/**
+ * Gets intelligent search suggestions from Gemini AI.
+ * @param query The user's partial search query.
+ * @returns A promise that resolves to an array of string suggestions.
+ */
+export const getSearchSuggestions = async (query: string): Promise<string[]> => {
+    if (!process.env.API_KEY) {
+        throw new Error("API_KEY environment variable not set");
+    }
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: `You are a search assistant for a P2P marketplace called MAZDADY. Based on the user's partial query "${query}", generate up to 5 relevant and concise search suggestions.`,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        suggestions: {
+                            type: Type.ARRAY,
+                            items: { type: Type.STRING }
+                        }
+                    },
+                    required: ["suggestions"]
+                }
+            },
+        });
+        
+        const jsonText = response.text.trim();
+        const result = JSON.parse(jsonText);
+        return result.suggestions || [];
+    } catch (error) {
+        console.error("Failed to get search suggestions:", error);
+        return []; // Return empty array on failure to prevent crashes
+    }
+};
+
+/**
+ * Improves a user's search query using the MAZ-AI QueryRewriter.
+ * @param query The original user query.
+ * @returns A promise that resolves to the improved query string.
+ */
+export const rewriteQuery = async (query: string): Promise<string> => {
+    if (!process.env.API_KEY) {
+        throw new Error("API_KEY environment variable not set");
+    }
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: `You are a query rewriter for a P2P marketplace called MAZDADY. Your task is to improve the user's search query for better results. For example, 'موبايل' could become 'هاتف ذكي جديد أو مستعمل'. Keep the rewritten query concise and relevant. The user's query is: "${query}"`,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        rewrittenQuery: { type: Type.STRING }
+                    },
+                    required: ["rewrittenQuery"]
+                }
+            },
+        });
+        
+        const jsonText = response.text.trim();
+        const result = JSON.parse(jsonText);
+        return result.rewrittenQuery || query; 
+    } catch (error) {
+        console.error("Failed to rewrite query:", error);
+        return query; // Return original query on failure
+    }
 };

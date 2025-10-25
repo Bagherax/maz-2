@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import MazdadyLogo from './ui/MazdadyLogo';
 
 const Auth: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -31,9 +32,12 @@ const Auth: React.FC = () => {
   return (
     <div className="min-h-screen bg-primary flex items-center justify-center">
       <div className="w-full max-w-md p-8 space-y-8 bg-secondary rounded-lg shadow-lg">
+        <div className="flex justify-center">
+            <MazdadyLogo className="h-12 w-12" />
+        </div>
         <div>
           <h2 className="text-center text-3xl font-extrabold text-text-primary">
-            {isLogin ? 'Sign in to MAZDADY' : 'Create an account'}
+            {isLogin ? 'Sign in to your account' : 'Create an account'}
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -82,7 +86,7 @@ const Auth: React.FC = () => {
           </button>
         </div>
          <div className="text-center">
-            <p className="text-xs text-text-secondary">Secured by MAZDADY Auth Service (Keycloak/OAuth 2.0)</p>
+            <p className="text-xs text-text-secondary">Secured by MAZ Auth Service (Keycloak/OAuth 2.0)</p>
         </div>
       </div>
     </div>

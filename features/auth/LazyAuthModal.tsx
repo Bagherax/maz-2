@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import Modal from '../../components/ui/Modal';
+import MazdadyLogo from '../../components/ui/MazdadyLogo';
 
 const LazyAuthModal: React.FC = () => {
   const { 
@@ -71,8 +72,11 @@ const LazyAuthModal: React.FC = () => {
       const isLogin = authModalState === 'login';
       return (
         <div>
+            <div className="flex justify-center mb-4">
+              <MazdadyLogo className="h-12 w-12" />
+            </div>
             <h2 className="text-center text-xl font-bold text-text-primary mb-4">
-                {isLogin ? 'Sign in to MAZDADY' : 'Create a Permanent Account'}
+                {isLogin ? 'Sign In' : 'Create a Permanent Account'}
             </h2>
             <form className="space-y-4" onSubmit={handleSubmit}>
               {!isLogin && (

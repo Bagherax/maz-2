@@ -35,7 +35,7 @@ const Conversation: React.FC<ConversationProps> = ({ conversationId, recipient, 
                 conversationId: 'system',
                 senderId: 'system',
                 receiverId: 'system',
-                text: "Your conversation is secured with E2E encryption. No one outside of this chat, not even MAZDADY, can read your messages.",
+                text: "Your conversation is secured with E2E encryption. No one outside of this chat, not even the platform operators, can read your messages.",
                 timestamp: new Date().toISOString(),
                 isRead: true,
             }]);

@@ -2,6 +2,7 @@ import React from 'react';
 import { HybridArchIcon } from '../../components/icons/HybridArchIcon';
 import { MicroservicesIcon } from '../../components/icons/MicroservicesIcon';
 import { ScalabilityIcon } from '../../components/icons/ScalabilityIcon';
+import MazdadyLogo from '../../components/ui/MazdadyLogo';
 
 const InfoItem: React.FC<{ icon: React.ReactElement; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
   <div className="flex items-start">
@@ -16,7 +17,10 @@ const InfoItem: React.FC<{ icon: React.ReactElement; title: string; children: Re
 export const InfrastructureInfo: React.FC = () => {
   return (
     <div className="w-full text-left p-4 bg-secondary rounded-lg border border-border-color">
-      <h3 className="text-base font-bold text-text-primary mb-4">MAZDADY Smart Infrastructure</h3>
+      <div className="flex items-center mb-4">
+        <MazdadyLogo className="h-8 w-8" />
+        <h3 className="text-base font-bold text-text-primary ml-2">Smart Infrastructure</h3>
+      </div>
       <div className="space-y-4">
         <InfoItem icon={<HybridArchIcon />} title="Hybrid Architecture">
           Combines on-device storage for privacy with your personal cloud for persistent access. You own your data.

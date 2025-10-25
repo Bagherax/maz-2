@@ -15,6 +15,7 @@ import AdminDashboard from './features/admin/AdminDashboard';
 import ThemeEditor from './features/admin/ThemeEditor';
 import LazyAuthModal from './features/auth/LazyAuthModal';
 import AdDetailSheet from './features/marketplace/AdDetailSheet';
+import MazdadyLogo from './components/ui/MazdadyLogo';
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = React.useState<View>(VIEWS.MARKETPLACE);
@@ -48,8 +49,9 @@ const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-primary">
-        <p className="text-text-primary">Loading MAZDADY...</p>
+      <div className="flex flex-col items-center justify-center h-screen bg-primary">
+        <MazdadyLogo className="h-20 w-20 mb-4 animate-pulse" />
+        <p className="text-text-primary">Loading...</p>
       </div>
     );
   }
