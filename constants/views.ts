@@ -9,4 +9,5 @@ export const VIEWS: { [key: string]: View } = {
   MANAGE_LISTINGS: 'manage_listings',
   ADMIN_DASHBOARD: 'admin_dashboard',
   THEME_EDITOR: 'theme_editor',
+  CATEGORY_EDITOR: 'category_editor',
 };

@@ -16,6 +16,7 @@ import ThemeEditor from './features/admin/ThemeEditor';
 import LazyAuthModal from './features/auth/LazyAuthModal';
 import AdDetailSheet from './features/marketplace/AdDetailSheet';
 import MazdadyLogo from './components/ui/MazdadyLogo';
+import CategoryEditor from './features/admin/CategoryEditor';
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = React.useState<View>(VIEWS.MARKETPLACE);
@@ -42,6 +43,9 @@ const App: React.FC = () => {
       case VIEWS.THEME_EDITOR:
         // This view requires an admin, handled within the component
         return <ThemeEditor setActiveView={setActiveView} />;
+      case VIEWS.CATEGORY_EDITOR:
+        // This view requires an admin, handled within the component
+        return <CategoryEditor setActiveView={setActiveView} />;
       default:
         return <Marketplace setActiveView={setActiveView} />;
     }
@@ -56,7 +60,7 @@ const App: React.FC = () => {
     );
   }
   
-  const isSubView = [VIEWS.MANAGE_LISTINGS, VIEWS.ADMIN_DASHBOARD, VIEWS.THEME_EDITOR].includes(activeView);
+  const isSubView = [VIEWS.MANAGE_LISTINGS, VIEWS.ADMIN_DASHBOARD, VIEWS.THEME_EDITOR, VIEWS.CATEGORY_EDITOR].includes(activeView);
   const showNav = identity?.type === 'FULL_USER' && !isSubView;
 
   return (

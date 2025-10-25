@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import type { View, Ad, AdminLogEntry } from '../../types';
+import type { View, Ad, AdminLogEntry, FullUser } from '../../types';
 import { VIEWS } from '../../constants/views';
 import * as api from '../../api';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
@@ -10,6 +10,7 @@ import { BookOpenIcon } from '../../components/icons/BookOpenIcon';
 import { ReportedAdCard } from './ReportedAdCard';
 import { useAuth } from '../../context/AuthContext';
 import { PaintBrushIcon } from '../../components/icons/PaintBrushIcon';
+import { FolderPlusIcon } from '../../components/icons/FolderPlusIcon';
 
 interface AdminDashboardProps {
     setActiveView: (view: View) => void;
@@ -21,8 +22,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ setActiveView }) => {
     const [auditLog, setAuditLog] = useState<AdminLogEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    // FIX: Destructure 'identity' and alias it to 'currentUser' for compatibility.
-    const { identity: currentUser } = useAuth();
+    const { identity } = useAuth();
+    const currentUser = identity as FullUser | null;
+
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -52,8 +54,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ setActiveView }) => {
         </section>
     );
     
-    // FIX: Check for FullUser type before accessing role property.
     const canEditTheme = currentUser?.type === 'FULL_USER' && (currentUser.role === 'super_admin' || currentUser.role === 'ui_editor');
+    const canEditCategories = currentUser?.type === 'FULL_USER' && (currentUser.role === 'super_admin' || currentUser.role === 'policy_admin');
 
     const renderContent = () => {
         if (loading) return <LoadingSpinner />;
@@ -61,15 +63,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ setActiveView }) => {
 
         return (
             <div className="space-y-6">
-                 {canEditTheme && (
-                    <button 
-                        onClick={() => setActiveView(VIEWS.THEME_EDITOR)}
-                        className="w-full text-left p-4 bg-purple-900/50 rounded-lg border border-purple-700 hover:bg-purple-900/80 transition-colors flex items-center"
-                    >
-                        <PaintBrushIcon />
-                        <span className="ml-3 font-semibold text-text-primary">UI Theme Editor</span>
-                    </button>
-                 )}
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {canEditTheme && (
+                        <button 
+                            onClick={() => setActiveView(VIEWS.THEME_EDITOR)}
+                            className="w-full text-left p-4 bg-purple-900/50 rounded-lg border border-purple-700 hover:bg-purple-900/80 transition-colors flex items-center"
+                        >
+                            <PaintBrushIcon />
+                            <span className="ml-3 font-semibold text-text-primary">UI Theme Editor</span>
+                        </button>
+                    )}
+                     {canEditCategories && (
+                        <button 
+                            onClick={() => setActiveView(VIEWS.CATEGORY_EDITOR)}
+                            className="w-full text-left p-4 bg-green-900/50 rounded-lg border border-green-700 hover:bg-green-900/80 transition-colors flex items-center"
+                        >
+                            <FolderPlusIcon />
+                            <span className="ml-3 font-semibold text-text-primary">Manage Categories</span>
+                        </button>
+                    )}
+                 </div>
 
                 <section className="bg-secondary rounded-lg border border-border-color p-4">
                     <div className="flex items-center mb-4">
@@ -126,7 +139,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ setActiveView }) => {
                 </button>
                 <div className="ml-2">
                     <h2 className="text-2xl font-bold text-text-primary">Admin & Compliance</h2>
-                    {/* FIX: Check for FullUser type before accessing role property. */}
                     {currentUser?.type === 'FULL_USER' && currentUser.role && (
                         <p className="text-xs font-semibold text-accent -mt-1">
                             Role: {currentUser.role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}

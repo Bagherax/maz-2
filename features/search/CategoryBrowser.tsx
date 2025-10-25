@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { MAZDADY_CATEGORIES, getCategoryIcon } from '../../constants/categories';
+import { getCategoryIcon } from '../../constants/categories';
 import { ChevronLeftIcon } from '../../components/icons/ChevronLeftIcon';
 import { ChevronRightIcon } from '../../components/icons/ChevronRightIcon';
 import { XMarkIcon } from '../../components/icons/XMarkIcon';
+import { useCategory } from '../../context/CategoryContext';
 
 interface CategoryBrowserProps {
   onCategorySelect: (path: string[]) => void;
@@ -10,6 +11,7 @@ interface CategoryBrowserProps {
 }
 
 const CategoryBrowser: React.FC<CategoryBrowserProps> = ({ onCategorySelect, onClose }) => {
+    const { categories: MAZDADY_CATEGORIES, loading } = useCategory();
     const [currentPath, setCurrentPath] = useState<string[]>([]);
 
     const navigateTo = (categoryName: string) => {
@@ -24,10 +26,10 @@ const CategoryBrowser: React.FC<CategoryBrowserProps> = ({ onCategorySelect, onC
     for (const key of currentPath) {
         currentLevel = currentLevel[key];
     }
-    const categories = Object.keys(currentLevel);
+    const categories = currentLevel ? Object.keys(currentLevel) : [];
 
     const handleCategoryClick = (categoryName: string) => {
-        const subcategories = Object.keys(currentLevel[categoryName]);
+        const subcategories = currentLevel[categoryName] ? Object.keys(currentLevel[categoryName]) : [];
         if (subcategories.length > 0) {
             navigateTo(categoryName);
         } else {
@@ -35,6 +37,10 @@ const CategoryBrowser: React.FC<CategoryBrowserProps> = ({ onCategorySelect, onC
             onCategorySelect([...currentPath, categoryName]);
         }
     };
+    
+    if (loading) {
+        return <div className="p-4 text-center text-text-secondary">Loading categories...</div>;
+    }
 
     return (
         <div className="relative h-full">
@@ -67,7 +73,7 @@ const CategoryBrowser: React.FC<CategoryBrowserProps> = ({ onCategorySelect, onC
             <div className="p-4 space-y-2">
                 {categories.map(categoryName => {
                     const icon = currentPath.length === 0 ? getCategoryIcon(categoryName) : null;
-                    const hasSubcategories = Object.keys(currentLevel[categoryName]).length > 0;
+                    const hasSubcategories = currentLevel[categoryName] && Object.keys(currentLevel[categoryName]).length > 0;
                     
                     return (
                         <button 

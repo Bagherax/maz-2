@@ -1,5 +1,5 @@
 import type { User, Ad, Conversation, AdminLogEntry, AdCondition } from '../types';
-import { MAZDADY_CATEGORIES } from '../constants/categories';
+import { DEFAULT_CATEGORIES } from '../constants/categories';
 
 // --- CONSTANTS ---
 export const JWT_KEY = 'mazdady_jwt';
@@ -35,14 +35,14 @@ const generateMockAds = (): Ad[] => {
         "Comfortable and stylish, made from genuine leather. Great for a living room.",
         "Signed by the legendary player. A true collector's item."
     ];
-    const topLevelCategories = Object.keys(MAZDADY_CATEGORIES);
+    const topLevelCategories = Object.keys(DEFAULT_CATEGORIES);
 
     for (let i = 1; i <= 100; i++) {
         const seller = MOCK_USERS[i % MOCK_USERS.length];
         const title = titles[i % titles.length];
         const topCategoryKey = topLevelCategories[i % topLevelCategories.length];
         
-        const subCategoryKeys = Object.keys(MAZDADY_CATEGORIES[topCategoryKey]);
+        const subCategoryKeys = Object.keys(DEFAULT_CATEGORIES[topCategoryKey as keyof typeof DEFAULT_CATEGORIES]);
         const subCategoryName = subCategoryKeys.length > 0 ? subCategoryKeys[i % subCategoryKeys.length] : null;
 
         const ad: Ad = {

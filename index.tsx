@@ -8,6 +8,7 @@ import { MarketplaceProvider } from './context/MarketplaceContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AdDetailProvider } from './context/AdDetailContext';
 import { SearchProvider } from './context/SearchContext';
+import { CategoryProvider } from './context/CategoryContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -24,7 +25,9 @@ root.render(
             <ThemeProvider>
               <AdDetailProvider>
                 <SearchProvider>
-                  <App />
+                  <CategoryProvider>
+                    <App />
+                  </CategoryProvider>
                 </SearchProvider>
               </AdDetailProvider>
             </ThemeProvider>

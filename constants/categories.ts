@@ -13,7 +13,9 @@ import { ServicesIcon } from '../components/icons/ServicesIcon';
 import { RetailIcon } from '../components/icons/RetailIcon';
 import { DefaultCategoryIcon } from '../components/icons/DefaultCategoryIcon';
 
-export const MAZDADY_CATEGORIES = {
+export const CATEGORIES_STORAGE_KEY = 'mazdady_dynamic_categories';
+
+export const DEFAULT_CATEGORIES = {
     "E-Commerce": {
         "B2B (Business-to-Business)": {},
         "B2C (Business-to-Consumer)": {},
