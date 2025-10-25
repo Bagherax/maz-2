@@ -5,6 +5,9 @@ import { useAuth } from './AuthContext';
 import { useNetwork } from '../hooks/useNetwork';
 
 type FilterType = 'all' | 'buy-now' | 'auction';
+export type AdSize = 'small' | 'medium' | 'large';
+export type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'popularity';
+
 
 interface MarketplaceContextType {
   ads: Ad[];
@@ -14,6 +17,10 @@ interface MarketplaceContextType {
   error: string | null;
   filter: FilterType;
   setFilter: (filter: FilterType) => void;
+  adSize: AdSize;
+  setAdSize: (size: AdSize) => void;
+  sortOption: SortOption;
+  setSortOption: (option: SortOption) => void;
   refreshMarketplaceData: () => Promise<void>;
 }
 
@@ -25,8 +32,9 @@ export const MarketplaceProvider: React.FC<{ children: ReactNode }> = ({ childre
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>('all');
+  const [adSize, setAdSize] = useState<AdSize>('medium');
+  const [sortOption, setSortOption] = useState<SortOption>('newest');
   
-  // FIX: Destructure 'identity' and alias it to 'currentUser' for compatibility.
   const { identity: currentUser } = useAuth();
   const { isOnline } = useNetwork();
   
@@ -34,8 +42,6 @@ export const MarketplaceProvider: React.FC<{ children: ReactNode }> = ({ childre
     setLoading(true);
     setError(null);
     try {
-      // Fetch public ads and user's own ads in parallel
-      // getAds() works for guests, and getMyAds() will correctly return [] for guests.
       const [fetchedAds, fetchedMyAds] = await Promise.all([
         api.getAds(),
         api.getMyAds()
@@ -51,28 +57,48 @@ export const MarketplaceProvider: React.FC<{ children: ReactNode }> = ({ childre
     }
   }, []);
 
-  // Initial data fetch and refetch on user change
   useEffect(() => {
     refreshMarketplaceData();
   }, [refreshMarketplaceData]);
 
-  // Re-fetch data when the user comes back online
   useEffect(() => {
-    // This logic prevents fetching on initial load if already online.
-    // We only want to trigger this when status changes from offline to online.
     const wasOffline = !isOnline; 
-    if (wasOffline) return; // a bit of a hacky way to get previous state
+    if (wasOffline) return;
 
-    // When isOnline becomes true, this effect runs
     if (isOnline) {
         refreshMarketplaceData();
     }
   }, [isOnline, refreshMarketplaceData]);
   
   const filteredAds = useMemo(() => {
-    if (filter === 'all') return ads;
-    return ads.filter(ad => ad.listingType === filter);
-  }, [ads, filter]);
+    let result = ads;
+    if (filter !== 'all') {
+      result = result.filter(ad => ad.listingType === filter);
+    }
+
+    const sortedResult = [...result];
+    switch (sortOption) {
+      case 'price-asc':
+        sortedResult.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-desc':
+        sortedResult.sort((a, b) => b.price - a.price);
+        break;
+      case 'popularity':
+        sortedResult.sort((a, b) => {
+          const popA = (a.reviews || 0) + (a.boostScore || 0);
+          const popB = (b.reviews || 0) + (b.boostScore || 0);
+          return popB - popA;
+        });
+        break;
+      case 'newest':
+      default:
+        sortedResult.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        break;
+    }
+
+    return sortedResult;
+  }, [ads, filter, sortOption]);
 
   const value = {
     ads,
@@ -82,6 +108,10 @@ export const MarketplaceProvider: React.FC<{ children: ReactNode }> = ({ childre
     error,
     filter,
     setFilter,
+    adSize,
+    setAdSize,
+    sortOption,
+    setSortOption,
     refreshMarketplaceData,
   };
 

@@ -1,5 +1,11 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect, useRef } from 'react';
 import * as api from '../api';
+import { useMarketplace } from '../hooks/useMarketplace';
+
+interface SearchIndexEntry {
+    text: string;
+    popularity: number;
+}
 
 interface SearchContextType {
   isPanelOpen: boolean;
@@ -7,8 +13,9 @@ interface SearchContextType {
   closePanel: () => void;
   query: string;
   updateQuery: (newQuery: string) => void;
+  suggestion: string | null;
+  acceptSuggestion: () => void;
   suggestions: string[];
-  rewrittenQuery: string | null;
   finalResult: string | null;
   loading: boolean;
   executeQueryNow: (query: string) => void;
@@ -19,86 +26,63 @@ const SearchContext = createContext<SearchContextType | undefined>(undefined);
 export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [suggestion, setSuggestion] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [rewrittenQuery, setRewrittenQuery] = useState<string | null>(null);
   const [finalResult, setFinalResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const debounceTimeout = useRef<number | null>(null);
+  const { ads } = useMarketplace();
+  const [searchIndex, setSearchIndex] = useState<SearchIndexEntry[]>([]);
+
+  // Generate the search knowledge base when ads are loaded
+  useEffect(() => {
+    if (ads.length > 0) {
+        const index = api.generateSearchIndexFromAds(ads);
+        setSearchIndex(index);
+    }
+  }, [ads]);
 
   const openPanel = () => setIsPanelOpen(true);
   const closePanel = () => setIsPanelOpen(false);
-
-  const fetchSuggestions = useCallback(async (currentQuery: string) => {
-    if (!currentQuery.trim()) {
-      setSuggestions([]);
-      setLoading(false);
-      return;
-    }
-    
-    try {
-      const fetchedSuggestions = await api.getSearchSuggestions(currentQuery);
-      // Ensure we only update suggestions if the query hasn't changed in the meantime
-      setQuery(q => {
-        if (q === currentQuery) {
-          setSuggestions(fetchedSuggestions);
-        }
-        return q;
-      });
-    } catch (error) {
-      console.error("Search suggestions failed:", error);
-      setSuggestions([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
   
   const updateQuery = useCallback((newQuery: string) => {
     setQuery(newQuery);
     setFinalResult(null);
-    setRewrittenQuery(null);
-    setSuggestions([]); // Immediately clear old suggestions to prevent stale state
-
-    if (debounceTimeout.current) {
-      clearTimeout(debounceTimeout.current);
-    }
 
     if (newQuery.trim()) {
-        setLoading(true); // Set loading immediately for better UX feedback
-        debounceTimeout.current = window.setTimeout(() => {
-            fetchSuggestions(newQuery);
-        }, 300);
+        const newSuggestion = api.getAutocompleteSuggestion(newQuery, searchIndex);
+        setSuggestion(newSuggestion);
     } else {
-        setLoading(false); // No query, so not loading.
+        setSuggestion(null);
     }
-  }, [fetchSuggestions]);
+  }, [searchIndex]);
+
+  const acceptSuggestion = useCallback(() => {
+    if (suggestion) {
+        // Use a functional update to ensure we're using the latest state
+        setQuery(prevQuery => prevQuery + suggestion);
+        setSuggestion(null);
+    }
+  }, [suggestion]);
 
   const executeQueryNow = useCallback(async (currentQuery: string) => {
     if (!currentQuery.trim()) return;
-
-    if (debounceTimeout.current) {
-      clearTimeout(debounceTimeout.current);
-    }
     
     setQuery(currentQuery);
+    setSuggestion(null); // Clear suggestion on execution
     setLoading(true);
     setSuggestions([]);
-    setRewrittenQuery(null);
     setFinalResult(null);
 
     try {
-      const improvedQuery = await api.rewriteQuery(currentQuery);
-      setRewrittenQuery(improvedQuery);
-      
-      const answer = await api.askAi(improvedQuery);
+      const answer = await api.answerQueryAboutMarketplace(currentQuery, ads);
       setFinalResult(answer);
-
     } catch (error) {
       console.error("Full search execution failed:", error);
       setFinalResult("Sorry, an error occurred while searching.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [ads]);
 
 
   const value = {
@@ -107,8 +91,9 @@ export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     closePanel,
     query,
     updateQuery,
+    suggestion,
+    acceptSuggestion,
     suggestions,
-    rewrittenQuery,
     finalResult,
     loading,
     executeQueryNow

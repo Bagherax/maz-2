@@ -1,26 +1,18 @@
-import React, { useMemo } from 'react';
-import type { Ad } from '../../types';
+import React, { useState } from 'react';
 import AdCard from '../../components/ui/AdCard';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useMarketplace } from '../../hooks/useMarketplace';
+import SettingsPanel from './SettingsPanel';
+import { SettingsIcon } from '../../components/icons/SettingsIcon';
+import type { View } from '../../types';
 
-type FilterType = 'all' | 'buy-now' | 'auction';
+interface MarketplaceProps {
+  setActiveView: (view: View) => void;
+}
 
-const Marketplace: React.FC = () => {
-  const { filteredAds, loading, error, filter, setFilter } = useMarketplace();
-
-  const FilterButton: React.FC<{ type: FilterType; label: string }> = ({ type, label }) => (
-    <button
-      onClick={() => setFilter(type)}
-      className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${
-        filter === type
-          ? 'bg-accent text-white'
-          : 'bg-secondary text-text-secondary hover:bg-border-color'
-      }`}
-    >
-      {label}
-    </button>
-  );
+const Marketplace: React.FC<MarketplaceProps> = ({ setActiveView }) => {
+  const { filteredAds, loading, error, adSize } = useMarketplace();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -29,24 +21,38 @@ const Marketplace: React.FC = () => {
   if (error) {
     return <div className="text-center text-red-500 mt-8">{error}</div>;
   }
+  
+  const gridLayout = {
+    small: "grid-cols-1 gap-2",
+    medium: "grid-cols-2 gap-4",
+    large: "grid-cols-2 gap-4",
+  };
 
   return (
     <div className="py-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-text-primary">Explore</h2>
-        <div className="flex items-center space-x-2">
-            <FilterButton type="all" label="All" />
-            <FilterButton type="buy-now" label="Buy Now" />
-            <FilterButton type="auction" label="Auctions" />
-        </div>
+      <div className="h-8 flex justify-end items-center mb-4">
+        <button 
+          onClick={() => setIsSettingsOpen(true)}
+          className="p-2 rounded-full text-text-secondary hover:bg-secondary hover:text-text-primary transition-colors"
+          aria-label="Open settings panel"
+        >
+          <SettingsIcon />
+        </button>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+
+      <SettingsPanel 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)}
+        setActiveView={setActiveView} 
+      />
+
+      <div className={`grid ${gridLayout[adSize]}`}>
         {filteredAds.map((ad) => (
-          <AdCard key={ad.id} ad={ad} size="medium" />
+          <AdCard key={ad.id} ad={ad} size={adSize} />
         ))}
       </div>
        {filteredAds.length === 0 && (
-        <div className="col-span-2 text-center py-10 text-text-secondary">
+        <div className="col-span-full text-center py-10 text-text-secondary">
           <p>No listings found for this category.</p>
         </div>
       )}

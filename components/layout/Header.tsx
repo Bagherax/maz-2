@@ -1,19 +1,21 @@
 import React from 'react';
 import { useNetwork } from '../../hooks/useNetwork';
-import { WifiStatusIcon } from '../icons/WifiStatusIcon';
 import AskAiSearch from '../ui/AskAiSearch';
 
 const Header: React.FC = () => {
   const { isOnline, toggleNetworkStatus } = useNetwork();
 
   return (
-    <header className="flex-shrink-0 bg-secondary h-16 flex items-center justify-between px-4 border-b border-border-color">
-      <AskAiSearch />
+    <header className="sticky top-0 z-40 flex-shrink-0 h-16 flex items-center justify-between px-4 border-b border-border-color bg-secondary/80 backdrop-blur-md">
       
-      {/* Network Status Simulator */}
+      {/* Search is now the primary left-side element */}
+      <div className="flex items-center gap-4">
+        <AskAiSearch />
+      </div>
+      
+      {/* Network Status Simulator will be pushed to the right */}
       <div className="flex items-center space-x-2" title="Simulate network connection going online/offline">
-        <WifiStatusIcon isOnline={isOnline} />
-        <span className={`text-xs font-semibold transition-colors ${isOnline ? 'text-green-400' : 'text-red-400'}`}>
+        <span className={`text-xs font-semibold transition-colors ${isOnline ? 'text-accent' : 'text-red-400'}`}>
           {isOnline ? 'Online' : 'Offline'}
         </span>
         <button

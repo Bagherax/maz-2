@@ -89,3 +89,4 @@ export * from './configService';
 export * from './adminService';
 export * from './themeService';
 export * from './aiService';
+export * from './masaService';

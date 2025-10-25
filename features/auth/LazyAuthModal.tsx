@@ -73,7 +73,7 @@ const LazyAuthModal: React.FC = () => {
       return (
         <div>
             <div className="flex justify-center mb-4">
-              <MazdadyLogo className="h-12 w-12" />
+              <MazdadyLogo className="text-5xl" />
             </div>
             <h2 className="text-center text-xl font-bold text-text-primary mb-4">
                 {isLogin ? 'Sign In' : 'Create a Permanent Account'}

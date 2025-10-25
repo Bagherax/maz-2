@@ -13,7 +13,6 @@ const SearchPanel: React.FC = () => {
         loading, 
         executeQueryNow, 
         query, 
-        rewrittenQuery, 
         finalResult 
     } = useSearch();
     
@@ -130,7 +129,7 @@ const SearchPanel: React.FC = () => {
                 <div className="text-center text-text-secondary py-4">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-accent mx-auto"></div>
                     <p className="mt-2 text-sm">
-                        {rewrittenQuery ? `Thinking about "${rewrittenQuery}"...` : 'Searching...'}
+                        MAZ AI is thinking...
                     </p>
                 </div>
             );
@@ -139,11 +138,6 @@ const SearchPanel: React.FC = () => {
         if (finalResult) {
             return (
                 <div className="flex-grow overflow-y-auto -mr-3 pr-3">
-                    {rewrittenQuery && query !== rewrittenQuery && (
-                        <p className="text-xs text-text-secondary mb-2 italic">
-                            Searching for: <span className="font-semibold text-text-primary not-italic">{rewrittenQuery}</span>
-                        </p>
-                    )}
                     <p className="text-sm text-text-primary whitespace-pre-wrap">{finalResult}</p>
                 </div>
             );
@@ -168,11 +162,11 @@ const SearchPanel: React.FC = () => {
             );
         }
 
-        if (query && !loading) {
+        if (query.length > 2 && !loading) {
             return <div className="text-center text-text-secondary py-4 text-sm">No suggestions. Press Enter to search.</div>;
         }
 
-        // Show categories when query is empty
+        // Show categories if query is empty or has 2 or fewer characters, and no other content is available.
         return renderCategories();
     };
 

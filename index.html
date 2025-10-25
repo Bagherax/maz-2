@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MAZ P2P Marketplace</title>
+    <title>MAZ P2P</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -34,10 +34,20 @@
         --color-text-secondary: #6B7280;
         --color-border-color: #E5E7EB;
       }
+      html.dark {
+        --color-primary: #111827;
+        --color-secondary: #1F2937;
+        --color-accent: #6366F1;
+        --color-accent-hover: #4F46E5;
+        --color-text-primary: #F9FAFB;
+        --color-text-secondary: #9CA3AF;
+        --color-border-color: #374151;
+      }
       body {
         font-family: 'Inter', sans-serif;
         background-color: var(--color-primary);
         color: var(--color-text-primary);
+        transition: background-color 0.3s, color 0.3s;
       }
       .ask-ai-wrapper {
         display: inline-block;
@@ -73,10 +83,36 @@
         z-index: 2; /* Bring input to the front */
         transition: color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       }
+      
+      .ask-ai-wrapper .ai-suggestion-input {
+        position: absolute;
+        top: 6px; /* Match container padding */
+        left: 14px; /* Match container padding */
+        color: #87CEFA; /* Light Sky Blue */
+        opacity: 0.8;
+        z-index: 1;
+        pointer-events: none;
+      }
+      
+      .ask-ai-wrapper .ai-placeholder {
+        position: absolute;
+        top: 6px;
+        left: 14px;
+        z-index: 1;
+        pointer-events: none;
+        font-style: italic;
+        color: var(--color-text-secondary);
+        white-space: nowrap;
+      }
+      
+      .ask-ai-wrapper .ai-input { /* The user input */
+        background-color: transparent;
+        caret-color: var(--color-text-primary);
+      }
+
 
       .ask-ai-wrapper .ai-input::placeholder {
-        color: var(--color-text-secondary);
-        font-style: italic;
+        color: transparent; /* Hide original placeholder to use the fake one */
       }
 
       /* SVG container */
@@ -250,6 +286,39 @@
         --x: -10px;
         --y: 15px;
         animation-delay: 0.6s;
+      }
+
+      /* Settings Panel */
+      .settings-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 280px;
+        max-width: 80vw;
+        background-color: var(--color-secondary);
+        z-index: 60;
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in-out;
+        border-left: 1px solid var(--color-border-color);
+        display: flex;
+        flex-direction: column;
+      }
+      .settings-panel.open {
+        transform: translateX(0);
+      }
+      .settings-backdrop {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0,0,0,0.6);
+        z-index: 59;
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out;
+        pointer-events: none;
+      }
+      .settings-backdrop.open {
+        opacity: 1;
+        pointer-events: auto;
       }
     </style>
   <script type="importmap">

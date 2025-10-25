@@ -2,15 +2,18 @@ import React, { createContext, useState, useEffect, useContext, ReactNode, useCa
 import type { Theme } from '../types';
 import * as api from '../api';
 
+type ThemeMode = 'light' | 'dark';
+
 interface ThemeContextType {
   theme: Theme;
+  themeMode: ThemeMode;
   setLiveTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
   loadTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-// Helper function to apply the theme to the document
 const applyTheme = (theme: Theme) => {
   const root = document.documentElement;
   Object.keys(theme).forEach(key => {
@@ -19,6 +22,9 @@ const applyTheme = (theme: Theme) => {
   });
 };
 
+const applyThemeMode = (mode: ThemeMode) => {
+    document.documentElement.classList.toggle('dark', mode === 'dark');
+};
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>({
@@ -30,6 +36,9 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     'text-secondary': '#6B7280',
     'border-color': '#E5E7EB',
   });
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
+      return (localStorage.getItem('mazdady_theme_mode') as ThemeMode) || 'light';
+  });
 
   const loadTheme = useCallback(async () => {
     const fetchedTheme = await api.getTheme();
@@ -38,28 +47,30 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, []);
 
   useEffect(() => {
-    // Load theme on initial mount
     loadTheme();
+    applyThemeMode(themeMode);
 
-    // Add a storage event listener to simulate the P2P "ThemeUpdateEvent"
-    // This allows the theme to update in real-time across all open tabs
-    // when an admin publishes a change.
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'mazdady_global_theme') {
             console.log("Received 'ThemeUpdateEvent' from P2P network simulation.");
             loadTheme();
         }
     };
-
     window.addEventListener('storage', handleStorageChange);
-
-    // Cleanup the listener on unmount
     return () => {
         window.removeEventListener('storage', handleStorageChange);
     };
-  }, [loadTheme]);
+  }, [loadTheme, themeMode]);
+  
+  const toggleTheme = () => {
+      setThemeMode(prevMode => {
+          const newMode = prevMode === 'light' ? 'dark' : 'light';
+          localStorage.setItem('mazdady_theme_mode', newMode);
+          applyThemeMode(newMode);
+          return newMode;
+      });
+  };
 
-  // This is used for live previews in the editor
   const setLiveTheme = (newTheme: Theme) => {
       setTheme(newTheme);
       applyTheme(newTheme);
@@ -67,7 +78,9 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const value = {
     theme,
+    themeMode,
     setLiveTheme,
+    toggleTheme,
     loadTheme,
   };
 

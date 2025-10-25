@@ -24,7 +24,7 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (activeView) {
       case VIEWS.MARKETPLACE:
-        return <Marketplace />;
+        return <Marketplace setActiveView={setActiveView} />;
       case VIEWS.SEARCH:
         return <Search />;
       case VIEWS.CREATE_AD:
@@ -43,14 +43,14 @@ const App: React.FC = () => {
         // This view requires an admin, handled within the component
         return <ThemeEditor setActiveView={setActiveView} />;
       default:
-        return <Marketplace />;
+        return <Marketplace setActiveView={setActiveView} />;
     }
   };
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-primary">
-        <MazdadyLogo className="h-20 w-20 mb-4 animate-pulse" />
+        <MazdadyLogo className="text-7xl mb-4 animate-pulse" />
         <p className="text-text-primary">Loading...</p>
       </div>
     );

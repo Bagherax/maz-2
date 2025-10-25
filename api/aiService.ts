@@ -25,6 +25,8 @@
  *       vectors for advanced, context-aware searching.
  *     - `ModeratorTiny.onnx`: A small, efficient model for detecting inappropriate content
  *       in text fields.
+ *     - `MarketplaceQnA.onnx`: (NEW) A model that takes user queries and marketplace data
+ *       as context to provide intelligent, conversational answers about listings.
  *
  * 4.  **Optional On-Prem Fallback:** For devices that cannot run the models locally or
  *     for more intensive tasks, the system can optionally fall back to a self-hosted
@@ -33,7 +35,7 @@
  *
  * The functions in this file simulate the output of these on-device models.
  */
-import { GoogleGenAI, Type } from "@google/genai";
+import type { Ad } from '../types';
 
 interface AdGenerationResult {
     title: string;
@@ -136,94 +138,61 @@ export const getSearchVector = async (query: string): Promise<number[]> => {
 };
 
 /**
- * Submits a general query to the Gemini AI for a quick answer.
- * @param prompt The user's question.
- * @returns A promise that resolves to the AI's text response.
+ * Simulates the `MarketplaceQnA.onnx` model. This AI "learns" from the application
+ * by taking the current ad listings as context to answer user questions.
+ * @param prompt The user's question about the marketplace.
+ * @param ads The current list of ads to use as context.
+ * @returns A promise that resolves to a natural language answer.
  */
-export const askAi = async (prompt: string): Promise<string> => {
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable not set");
-    }
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-            systemInstruction: "You are a helpful assistant for the MAZDADY P2P marketplace. Answer user questions concisely and clearly in 1-2 sentences.",
-        },
-    });
-    return response.text;
-};
+export const answerQueryAboutMarketplace = async (prompt: string, ads: Ad[]): Promise<string> => {
+    console.log("Simulating on-device inference with MarketplaceQnA.onnx...");
+    await new Promise(res => setTimeout(res, 1500));
 
-/**
- * Gets intelligent search suggestions from Gemini AI.
- * @param query The user's partial search query.
- * @returns A promise that resolves to an array of string suggestions.
- */
-export const getSearchSuggestions = async (query: string): Promise<string[]> => {
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable not set");
-    }
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: `You are a search assistant for a P2P marketplace called MAZDADY. Based on the user's partial query "${query}", generate up to 5 relevant and concise search suggestions.`,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        suggestions: {
-                            type: Type.ARRAY,
-                            items: { type: Type.STRING }
-                        }
-                    },
-                    required: ["suggestions"]
-                }
-            },
-        });
-        
-        const jsonText = response.text.trim();
-        const result = JSON.parse(jsonText);
-        return result.suggestions || [];
-    } catch (error) {
-        console.error("Failed to get search suggestions:", error);
-        return []; // Return empty array on failure to prevent crashes
-    }
-};
+    const p = prompt.toLowerCase();
 
-/**
- * Improves a user's search query using the MAZ-AI QueryRewriter.
- * @param query The original user query.
- * @returns A promise that resolves to the improved query string.
- */
-export const rewriteQuery = async (query: string): Promise<string> => {
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable not set");
+    // 1. Handle counting queries
+    if (p.includes('how many') || p.includes('count')) {
+        const keyword = p.replace('how many', '').replace('count', '').replace('are there', '').trim().slice(0, -1); // remove plural 's'
+        const filteredAds = ads.filter(ad => ad.title.toLowerCase().includes(keyword));
+        if (filteredAds.length > 0) {
+            return `I found ${filteredAds.length} listings matching "${keyword}".`;
+        } else {
+            return `I couldn't find any listings for "${keyword}".`;
+        }
     }
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: `You are a query rewriter for a P2P marketplace called MAZDADY. Your task is to improve the user's search query for better results. For example, 'موبايل' could become 'هاتف ذكي جديد أو مستعمل'. Keep the rewritten query concise and relevant. The user's query is: "${query}"`,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        rewrittenQuery: { type: Type.STRING }
-                    },
-                    required: ["rewrittenQuery"]
-                }
-            },
-        });
+
+    // 2. Handle pricing queries
+    if (p.includes('cheapest') || p.includes('most expensive') || p.includes('priciest')) {
+        const isCheapest = p.includes('cheapest');
+        const keyword = p.replace('cheapest', '').replace('most expensive', '').replace('priciest', '').trim();
+        let filteredAds = ads;
+        if (keyword) {
+           filteredAds = ads.filter(ad => ad.title.toLowerCase().includes(keyword));
+        }
         
-        const jsonText = response.text.trim();
-        const result = JSON.parse(jsonText);
-        return result.rewrittenQuery || query; 
-    } catch (error) {
-        console.error("Failed to rewrite query:", error);
-        return query; // Return original query on failure
+        if (filteredAds.length === 0) {
+            return `I couldn't find any listings for "${keyword}" to compare prices.`;
+        }
+
+        const sortedAds = [...filteredAds].sort((a, b) => a.price - b.price);
+        const targetAd = isCheapest ? sortedAds[0] : sortedAds[sortedAds.length - 1];
+        
+        return `The ${isCheapest ? 'cheapest' : 'most expensive'} ${keyword || 'item'} is the "${targetAd.title}" for $${targetAd.price.toFixed(2)}.`;
     }
+
+    // 3. Handle listing queries
+    if (p.startsWith('list') || p.startsWith('show me')) {
+        const keyword = p.replace('list', '').replace('show me', '').trim();
+        const filteredAds = ads.filter(ad => ad.title.toLowerCase().includes(keyword) || ad.description.toLowerCase().includes(keyword));
+        
+        if (filteredAds.length === 0) {
+            return `I couldn't find any listings for "${keyword}".`;
+        }
+
+        const topResults = filteredAds.slice(0, 3).map(ad => `- ${ad.title} ($${ad.price.toFixed(2)})`).join('\n');
+        return `Here are some top results for "${keyword}":\n${topResults}`;
+    }
+    
+    // Default fallback
+    return "I can answer questions about the marketplace listings. Try asking 'how many cars are there?' or 'what is the cheapest laptop?'.";
 };

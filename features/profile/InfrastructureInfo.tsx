@@ -18,7 +18,7 @@ export const InfrastructureInfo: React.FC = () => {
   return (
     <div className="w-full text-left p-4 bg-secondary rounded-lg border border-border-color">
       <div className="flex items-center mb-4">
-        <MazdadyLogo className="h-8 w-8" />
+        <MazdadyLogo className="text-3xl" />
         <h3 className="text-base font-bold text-text-primary ml-2">Smart Infrastructure</h3>
       </div>
       <div className="space-y-4">
