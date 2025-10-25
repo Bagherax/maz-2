@@ -14,13 +14,29 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+const THEME_STYLE_ID = 'mazdady-dynamic-theme';
+
+/**
+ * Applies the customizable theme by injecting a <style> tag.
+ * This is the correct approach to avoid CSS specificity issues where inline
+ * styles would override the stylesheet's dark mode rules.
+ * @param theme The theme object with color values.
+ */
 const applyTheme = (theme: Theme) => {
-  const root = document.documentElement;
-  Object.keys(theme).forEach(key => {
-    const cssVarName = `--color-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
-    root.style.setProperty(cssVarName, theme[key as keyof Theme]);
-  });
+  let styleTag = document.getElementById(THEME_STYLE_ID);
+  if (!styleTag) {
+    styleTag = document.createElement('style');
+    styleTag.id = THEME_STYLE_ID;
+    document.head.appendChild(styleTag);
+  }
+  
+  const themeVariables = Object.entries(theme)
+    .map(([key, value]) => `--color-${key}: ${value};`)
+    .join('\n');
+    
+  styleTag.innerHTML = `:root { ${themeVariables} }`;
 };
+
 
 const applyThemeMode = (mode: ThemeMode) => {
     document.documentElement.classList.toggle('dark', mode === 'dark');
@@ -46,9 +62,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     applyTheme(fetchedTheme);
   }, []);
 
+  // Effect for loading the P2P-distributed theme.
+  // Runs on mount and when the theme is updated in another tab.
   useEffect(() => {
     loadTheme();
-    applyThemeMode(themeMode);
 
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'mazdady_global_theme') {
@@ -60,13 +77,19 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return () => {
         window.removeEventListener('storage', handleStorageChange);
     };
-  }, [loadTheme, themeMode]);
+  }, [loadTheme]);
+
+  // Effect for applying the light/dark mode class.
+  // Runs whenever themeMode state changes.
+  useEffect(() => {
+    applyThemeMode(themeMode);
+  }, [themeMode]);
   
   const toggleTheme = () => {
       setThemeMode(prevMode => {
           const newMode = prevMode === 'light' ? 'dark' : 'light';
           localStorage.setItem('mazdady_theme_mode', newMode);
-          applyThemeMode(newMode);
+          // The useEffect hook above will handle applying the class change.
           return newMode;
       });
   };

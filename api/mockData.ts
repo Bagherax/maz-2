@@ -1,4 +1,5 @@
 import type { User, Ad, Conversation, AdminLogEntry, AdCondition } from '../types';
+import { MAZDADY_CATEGORIES } from '../constants/categories';
 
 // --- CONSTANTS ---
 export const JWT_KEY = 'mazdady_jwt';
@@ -34,10 +35,16 @@ const generateMockAds = (): Ad[] => {
         "Comfortable and stylish, made from genuine leather. Great for a living room.",
         "Signed by the legendary player. A true collector's item."
     ];
+    const topLevelCategories = Object.keys(MAZDADY_CATEGORIES);
 
     for (let i = 1; i <= 100; i++) {
         const seller = MOCK_USERS[i % MOCK_USERS.length];
         const title = titles[i % titles.length];
+        const topCategoryKey = topLevelCategories[i % topLevelCategories.length];
+        
+        const subCategoryKeys = Object.keys(MAZDADY_CATEGORIES[topCategoryKey]);
+        const subCategoryName = subCategoryKeys.length > 0 ? subCategoryKeys[i % subCategoryKeys.length] : null;
+
         const ad: Ad = {
             id: `ad-gen-${i}`,
             publicId: `uuid-ad-gen-${i}`,
@@ -62,6 +69,7 @@ const generateMockAds = (): Ad[] => {
             createdAt: new Date(Date.now() - 86400000 * i).toISOString(),
             listingType: Math.random() > 0.3 ? 'buy-now' : 'auction',
             syncStatus: 'public',
+            categoryPath: subCategoryName ? [topCategoryKey, subCategoryName] : [topCategoryKey],
         };
         if (ad.listingType === 'auction') {
             ad.auctionType = 'english';
@@ -84,8 +92,8 @@ const getInitialMockAds = (): Ad[] => {
 
     // Keep some original specific ads for consistency
     const specialAds: Ad[] = [
-        { id: 'ad-2', version: 1, boostScore: 0, publicId: 'uuid-ad-2', title: 'Rare Comic Book (Sealed Auction)', description: 'First edition, mint condition.', price: 500, seller: MOCK_USERS[0], imageUrls: Array.from({ length: 10 }, (_, k) => `https://picsum.photos/seed/comic${k}/600/400`), createdAt: new Date(Date.now() - 86400000 * 3).toISOString(), listingType: 'auction', syncStatus: 'synced', auctionType: 'sealed', auctionDetails: { startTime: new Date().toISOString(), endTime: new Date(Date.now() + 86400000 * 2).toISOString(), startPrice: 500, bids: [] }, cloudUrl: 'https://user-cloud.com/ads/uuid-ad-2.json?token=xyz', signature: 'jwt.mock.signature.user1', location: "Dammam", rating: 4.9, reviews: 45, condition: 'new', viewCount: 12345 },
-        { id: 'ad-flagged-1', version: 1, boostScore: 0, publicId: 'uuid-ad-flagged-1', title: 'Suspiciously Cheap Smart Watch', description: 'Brand new smart watch, latest model, huge discount.', price: 25, seller: MOCK_USERS[1], imageUrls: Array.from({ length: 10 }, (_, k) => `https://picsum.photos/seed/watch${k}/600/400`), createdAt: new Date().toISOString(), listingType: 'buy-now', syncStatus: 'public', isFlagged: true, reportReason: 'Potential Scam / Counterfeit Item', location: "Jeddah", rating: 2.1, reviews: 112, condition: 'new', viewCount: 987 },
+        { id: 'ad-2', version: 1, boostScore: 0, publicId: 'uuid-ad-2', title: 'Rare Comic Book (Sealed Auction)', description: 'First edition, mint condition.', price: 500, seller: MOCK_USERS[0], imageUrls: Array.from({ length: 10 }, (_, k) => `https://picsum.photos/seed/comic${k}/600/400`), createdAt: new Date(Date.now() - 86400000 * 3).toISOString(), listingType: 'auction', syncStatus: 'synced', auctionType: 'sealed', auctionDetails: { startTime: new Date().toISOString(), endTime: new Date(Date.now() + 86400000 * 2).toISOString(), startPrice: 500, bids: [] }, cloudUrl: 'https://user-cloud.com/ads/uuid-ad-2.json?token=xyz', signature: 'jwt.mock.signature.user1', location: "Dammam", rating: 4.9, reviews: 45, condition: 'new', viewCount: 12345, categoryPath: ["Hobbies, Sports & Leisure", "Collectibles"] },
+        { id: 'ad-flagged-1', version: 1, boostScore: 0, publicId: 'uuid-ad-flagged-1', title: 'Suspiciously Cheap Smart Watch', description: 'Brand new smart watch, latest model, huge discount.', price: 25, seller: MOCK_USERS[1], imageUrls: Array.from({ length: 10 }, (_, k) => `https://picsum.photos/seed/watch${k}/600/400`), createdAt: new Date().toISOString(), listingType: 'buy-now', syncStatus: 'public', isFlagged: true, reportReason: 'Potential Scam / Counterfeit Item', location: "Jeddah", rating: 2.1, reviews: 112, condition: 'new', viewCount: 987, categoryPath: ["Electronics & Technology", "Wearable Technology"] },
     ];
 
     // Ensure special ads are not duplicated by generated ones

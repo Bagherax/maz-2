@@ -55,7 +55,15 @@ const Chat: React.FC<ChatProps> = ({ initialConversationId, initialRecipient }) 
 
     const handleSelectConversation = (convo: ConversationType) => {
         if (!identity || identity.type !== 'FULL_USER') return;
-        const otherParticipantId = convo.participantIds.find(id => id !== identity.id)!;
+
+        const otherParticipantId = convo.participantIds.find(id => id !== identity.id);
+
+        if (!otherParticipantId || !convo.participantDetails[otherParticipantId]) {
+            console.error("Cannot open conversation due to missing participant details.", convo);
+            setError("Could not open conversation. Data might be corrupted.");
+            return;
+        }
+
         setActiveRecipient(convo.participantDetails[otherParticipantId]);
         setSelectedConversation(convo);
     };
@@ -107,8 +115,17 @@ const Chat: React.FC<ChatProps> = ({ initialConversationId, initialRecipient }) 
                 <div className="space-y-2">
                     {conversations.map(convo => {
                         if (identity.type !== 'FULL_USER') return null;
-                        const otherParticipantId = convo.participantIds.find(id => id !== identity?.id)!;
+
+                        const otherParticipantId = convo.participantIds.find(id => id !== identity?.id);
+                        
+                        // Defensive check to prevent crash on corrupted data
+                        if (!otherParticipantId || !convo.participantDetails[otherParticipantId]) {
+                            console.warn("Skipping rendering of conversation with incomplete data:", convo);
+                            return null;
+                        }
+                        
                         const otherParticipant = convo.participantDetails[otherParticipantId];
+
                         return (
                             <button key={convo.id} onClick={() => handleSelectConversation(convo)} className="w-full text-left flex items-center p-3 bg-secondary rounded-lg border border-transparent hover:border-border-color transition-colors">
                                 <img src={otherParticipant.avatarUrl} alt={otherParticipant.username} className="w-12 h-12 rounded-full" />

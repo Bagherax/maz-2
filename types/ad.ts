@@ -47,4 +47,5 @@ export interface Ad {
   isFlagged?: boolean; // True if the ad has been reported by a user
   reportReason?: string; // The reason for the report
   takedownReason?: string; // The reason an admin took the ad down
+  categoryPath?: string[]; // Path to the category, e.g., ["Marketplaces", "Electronics", "Phones"]
 }

@@ -1,39 +1,34 @@
-import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect, useRef } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
 import * as api from '../api';
 import { useMarketplace } from '../hooks/useMarketplace';
-
-interface SearchIndexEntry {
-    text: string;
-    popularity: number;
-}
+import type { AiCommandResult, SearchIndexEntry } from '../api/masaService';
+import type { View } from '../types';
 
 interface SearchContextType {
-  isPanelOpen: boolean;
-  openPanel: () => void;
-  closePanel: () => void;
+  isSearchPanelOpen: boolean;
+  openSearchPanel: () => void;
+  closeSearchPanel: () => void;
   query: string;
-  updateQuery: (newQuery: string) => void;
+  setQuery: (newQuery: string) => void;
   suggestion: string | null;
   acceptSuggestion: () => void;
-  suggestions: string[];
-  finalResult: string | null;
+  commandResult: AiCommandResult | null;
   loading: boolean;
-  executeQueryNow: (query: string) => void;
+  executeQuery: (directQuery?: string) => void;
+  handleCommandAction: (command: AiCommandResult, setActiveView: (view: View) => void) => void;
 }
 
 const SearchContext = createContext<SearchContextType | undefined>(undefined);
 
 export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [suggestion, setSuggestion] = useState<string | null>(null);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [finalResult, setFinalResult] = useState<string | null>(null);
+  const [commandResult, setCommandResult] = useState<AiCommandResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const { ads } = useMarketplace();
+  const { ads, setSearchTerm, setCategoryPathFilter } = useMarketplace();
   const [searchIndex, setSearchIndex] = useState<SearchIndexEntry[]>([]);
 
-  // Generate the search knowledge base when ads are loaded
   useEffect(() => {
     if (ads.length > 0) {
         const index = api.generateSearchIndexFromAds(ads);
@@ -41,12 +36,17 @@ export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   }, [ads]);
 
-  const openPanel = () => setIsPanelOpen(true);
-  const closePanel = () => setIsPanelOpen(false);
+  const openSearchPanel = () => setIsSearchPanelOpen(true);
+  const closeSearchPanel = useCallback(() => {
+    setIsSearchPanelOpen(false);
+    setQuery('');
+    setSuggestion(null);
+    setCommandResult(null);
+  }, []);
   
   const updateQuery = useCallback((newQuery: string) => {
     setQuery(newQuery);
-    setFinalResult(null);
+    setCommandResult(null);
 
     if (newQuery.trim()) {
         const newSuggestion = api.getAutocompleteSuggestion(newQuery, searchIndex);
@@ -58,45 +58,68 @@ export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const acceptSuggestion = useCallback(() => {
     if (suggestion) {
-        // Use a functional update to ensure we're using the latest state
         setQuery(prevQuery => prevQuery + suggestion);
         setSuggestion(null);
     }
   }, [suggestion]);
 
-  const executeQueryNow = useCallback(async (currentQuery: string) => {
-    if (!currentQuery.trim()) return;
+  const executeQuery = useCallback(async (directQuery?: string) => {
+    const finalQuery = directQuery ?? (query + (suggestion || ''));
+    if (!finalQuery.trim()) return;
     
-    setQuery(currentQuery);
-    setSuggestion(null); // Clear suggestion on execution
+    if(!directQuery) {
+        setQuery(finalQuery);
+    }
+    setSuggestion(null);
     setLoading(true);
-    setSuggestions([]);
-    setFinalResult(null);
+    setCommandResult(null);
 
     try {
-      const answer = await api.answerQueryAboutMarketplace(currentQuery, ads);
-      setFinalResult(answer);
+      const result = await api.parseAiCommand(finalQuery, ads);
+      setCommandResult(result);
     } catch (error) {
-      console.error("Full search execution failed:", error);
-      setFinalResult("Sorry, an error occurred while searching.");
+      console.error("AI command execution failed:", error);
+      setCommandResult({ type: 'error', payload: "Sorry, an error occurred while processing your command." });
     } finally {
       setLoading(false);
     }
-  }, [ads]);
+  }, [query, suggestion, ads]);
+
+  const handleCommandAction = (command: AiCommandResult, setActiveView: (view: View) => void) => {
+      switch(command.type) {
+          case 'apply_filters':
+              if (command.payload.searchTerm) {
+                  setSearchTerm(command.payload.searchTerm);
+              }
+              setCategoryPathFilter(null); // Clear category filter
+              closeSearchPanel();
+              break;
+          case 'apply_category_filter':
+              setCategoryPathFilter(command.payload.path);
+              closeSearchPanel();
+              break;
+          case 'navigate':
+              setActiveView(command.payload.view);
+              closeSearchPanel();
+              break;
+          default:
+              break;
+      }
+  };
 
 
   const value = {
-    isPanelOpen,
-    openPanel,
-    closePanel,
+    isSearchPanelOpen,
+    openSearchPanel,
+    closeSearchPanel,
     query,
-    updateQuery,
+    setQuery: updateQuery,
     suggestion,
     acceptSuggestion,
-    suggestions,
-    finalResult,
+    commandResult,
     loading,
-    executeQueryNow
+    executeQuery,
+    handleCommandAction,
   };
 
   return (

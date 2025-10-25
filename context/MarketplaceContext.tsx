@@ -5,8 +5,8 @@ import { useAuth } from './AuthContext';
 import { useNetwork } from '../hooks/useNetwork';
 
 type FilterType = 'all' | 'buy-now' | 'auction';
-export type AdSize = 'small' | 'medium' | 'large';
 export type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'popularity';
+export type ViewMode = 'grid' | 'large';
 
 
 interface MarketplaceContextType {
@@ -17,10 +17,14 @@ interface MarketplaceContextType {
   error: string | null;
   filter: FilterType;
   setFilter: (filter: FilterType) => void;
-  adSize: AdSize;
-  setAdSize: (size: AdSize) => void;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
   sortOption: SortOption;
   setSortOption: (option: SortOption) => void;
+  categoryPathFilter: string[] | null;
+  setCategoryPathFilter: (path: string[] | null) => void;
+  viewMode: ViewMode;
+  setViewMode: (mode: ViewMode) => void;
   refreshMarketplaceData: () => Promise<void>;
 }
 
@@ -32,8 +36,10 @@ export const MarketplaceProvider: React.FC<{ children: ReactNode }> = ({ childre
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>('all');
-  const [adSize, setAdSize] = useState<AdSize>('medium');
+  const [searchTerm, setSearchTerm] = useState('');
   const [sortOption, setSortOption] = useState<SortOption>('newest');
+  const [categoryPathFilter, setCategoryPathFilter] = useState<string[] | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   
   const { identity: currentUser } = useAuth();
   const { isOnline } = useNetwork();
@@ -72,10 +78,30 @@ export const MarketplaceProvider: React.FC<{ children: ReactNode }> = ({ childre
   
   const filteredAds = useMemo(() => {
     let result = ads;
-    if (filter !== 'all') {
-      result = result.filter(ad => ad.listingType === filter);
+    
+    // Category filter takes precedence.
+    if (categoryPathFilter && categoryPathFilter.length > 0) {
+        result = result.filter(ad => {
+            if (!ad.categoryPath) return false;
+            // Check if ad's path starts with the filter path
+            return categoryPathFilter.every((segment, index) => ad.categoryPath && ad.categoryPath[index] === segment);
+        });
+    } else {
+        // Only apply other filters if category is not set
+        if (filter !== 'all') {
+          result = result.filter(ad => ad.listingType === filter);
+        }
+
+        if (searchTerm.trim()) {
+            const lowerCaseSearchTerm = searchTerm.toLowerCase();
+            result = result.filter(ad => 
+                ad.title.toLowerCase().includes(lowerCaseSearchTerm) ||
+                ad.description.toLowerCase().includes(lowerCaseSearchTerm)
+            );
+        }
     }
 
+    // Apply sorting
     const sortedResult = [...result];
     switch (sortOption) {
       case 'price-asc':
@@ -98,7 +124,16 @@ export const MarketplaceProvider: React.FC<{ children: ReactNode }> = ({ childre
     }
 
     return sortedResult;
-  }, [ads, filter, sortOption]);
+  }, [ads, filter, searchTerm, sortOption, categoryPathFilter]);
+
+  const handleSetCategoryPathFilter = (path: string[] | null) => {
+    setCategoryPathFilter(path);
+    // Clear other filters for a predictable user experience
+    if (path) {
+        setSearchTerm('');
+        setFilter('all');
+    }
+  };
 
   const value = {
     ads,
@@ -108,10 +143,14 @@ export const MarketplaceProvider: React.FC<{ children: ReactNode }> = ({ childre
     error,
     filter,
     setFilter,
-    adSize,
-    setAdSize,
+    searchTerm,
+    setSearchTerm,
     sortOption,
     setSortOption,
+    categoryPathFilter,
+    setCategoryPathFilter: handleSetCategoryPathFilter,
+    viewMode,
+    setViewMode,
     refreshMarketplaceData,
   };
 

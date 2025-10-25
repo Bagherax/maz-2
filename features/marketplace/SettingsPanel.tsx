@@ -1,14 +1,11 @@
 import React from 'react';
 // FIX: Corrected the import path for the 'useMarketplace' hook.
 import { useMarketplace } from '../../hooks/useMarketplace';
-import { AdSize, SortOption } from '../../context/MarketplaceContext';
+import { SortOption, ViewMode } from '../../context/MarketplaceContext';
 import { useTheme } from '../../context/ThemeContext';
 import { XMarkIcon } from '../../components/icons/XMarkIcon';
 import { SunIcon } from '../../components/icons/SunIcon';
 import { MoonIcon } from '../../components/icons/MoonIcon';
-import { ViewListIcon } from '../../components/icons/ViewListIcon';
-import { ViewGridIcon } from '../../components/icons/ViewGridIcon';
-import { ViewGridAddIcon } from '../../components/icons/ViewGridAddIcon';
 import { SortAscendingIcon } from '../../components/icons/SortAscendingIcon';
 import { UserIcon } from '../../components/icons/UserIcon';
 import { FavoriteIcon } from '../../components/icons/FavoriteIcon';
@@ -17,6 +14,8 @@ import { PlusCircleIcon } from '../../components/icons/PlusCircleIcon';
 import type { View } from '../../types';
 import { VIEWS } from '../../constants/views';
 import { useNotification } from '../../hooks/useNotification';
+import { ViewGridIcon } from '../../components/icons/ViewGridIcon';
+import { ViewGridAddIcon } from '../../components/icons/ViewGridAddIcon';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -25,7 +24,7 @@ interface SettingsPanelProps {
 }
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, setActiveView }) => {
-  const { filter, setFilter, adSize, setAdSize, sortOption, setSortOption } = useMarketplace();
+  const { filter, setFilter, sortOption, setSortOption, viewMode, setViewMode } = useMarketplace();
   const { themeMode, toggleTheme } = useTheme();
   const { addNotification } = useNotification();
 
@@ -55,19 +54,19 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, setActiv
       {label}
     </button>
   );
-  
-  const SizeButton: React.FC<{size: AdSize, icon: React.ReactElement}> = ({size, icon}) => (
-       <button
-          onClick={() => setAdSize(size)}
-          className={`p-2 rounded-full transition-colors ${
-            adSize === size ? 'bg-accent text-white' : 'bg-primary text-text-secondary hover:bg-border-color'
-          }`}
-          aria-label={`Set view to ${size}`}
-        >
-          {icon}
-        </button>
-  );
 
+  const ViewModeButton: React.FC<{ mode: ViewMode; children: React.ReactNode; label: string }> = ({ mode, children, label }) => (
+    <button
+      onClick={() => setViewMode(mode)}
+      className={`p-2 rounded-md transition-colors w-full flex items-center justify-center ${
+        viewMode === mode ? 'bg-accent text-white' : 'bg-primary text-text-secondary hover:bg-border-color'
+      }`}
+      aria-label={label}
+    >
+      {children}
+    </button>
+  );
+  
   return (
     <>
       <div
@@ -84,19 +83,18 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, setActiv
         </header>
 
         <div className="p-4 overflow-y-auto flex-grow">
+          <Section title="Ad View">
+            <div className="flex items-center space-x-2">
+              <ViewModeButton mode="grid" label="Grid View"><ViewGridIcon /></ViewModeButton>
+              <ViewModeButton mode="large" label="Large View"><ViewGridAddIcon /></ViewModeButton>
+            </div>
+          </Section>
+
           <Section title="Listing Type">
             <div className="flex items-center space-x-2">
               <FilterButton type="all" label="All" />
               <FilterButton type="buy-now" label="Buy Now" />
               <FilterButton type="auction" label="Auction" />
-            </div>
-          </Section>
-
-          <Section title="Display Size">
-            <div className="flex items-center space-x-2 p-1 bg-primary rounded-full">
-                <SizeButton size="small" icon={<ViewListIcon />} />
-                <SizeButton size="medium" icon={<ViewGridIcon />} />
-                <SizeButton size="large" icon={<ViewGridAddIcon />} />
             </div>
           </Section>
 

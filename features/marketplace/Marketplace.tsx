@@ -11,7 +11,7 @@ interface MarketplaceProps {
 }
 
 const Marketplace: React.FC<MarketplaceProps> = ({ setActiveView }) => {
-  const { filteredAds, loading, error, adSize } = useMarketplace();
+  const { filteredAds, loading, error, viewMode } = useMarketplace();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   if (loading) {
@@ -22,10 +22,9 @@ const Marketplace: React.FC<MarketplaceProps> = ({ setActiveView }) => {
     return <div className="text-center text-red-500 mt-8">{error}</div>;
   }
   
-  const gridLayout = {
-    small: "grid-cols-1 gap-2",
-    medium: "grid-cols-2 gap-4",
-    large: "grid-cols-2 gap-4",
+  const gridClasses = {
+    grid: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4',
+    large: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4',
   };
 
   return (
@@ -46,9 +45,9 @@ const Marketplace: React.FC<MarketplaceProps> = ({ setActiveView }) => {
         setActiveView={setActiveView} 
       />
 
-      <div className={`grid ${gridLayout[adSize]}`}>
+      <div className={`grid ${gridClasses[viewMode]}`}>
         {filteredAds.map((ad) => (
-          <AdCard key={ad.id} ad={ad} size={adSize} />
+          <AdCard key={ad.id} ad={ad} viewMode={viewMode} />
         ))}
       </div>
        {filteredAds.length === 0 && (

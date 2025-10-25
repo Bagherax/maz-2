@@ -60,19 +60,17 @@ const App: React.FC = () => {
   const showNav = identity?.type === 'FULL_USER' && !isSubView;
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-primary md:items-center">
+    <div className="h-screen w-screen flex flex-col bg-primary">
       <NotificationContainer />
       <LazyAuthModal />
       <AdDetailSheet />
-      <div className="w-full max-w-md flex-1 flex flex-col">
-        <Header />
-        <main className="flex-1 overflow-y-auto pb-20 px-4">
-          {renderView()}
-        </main>
-        {showNav && (
-          <BottomNav activeView={activeView} setActiveView={setActiveView} />
-        )}
-      </div>
+      <Header setActiveView={setActiveView} />
+      <main className="w-full max-w-5xl mx-auto flex-1 overflow-y-auto pt-16 pb-20 px-4">
+        {renderView()}
+      </main>
+      {showNav && (
+        <BottomNav activeView={activeView} setActiveView={setActiveView} />
+      )}
     </div>
   );
 };

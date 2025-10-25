@@ -95,8 +95,8 @@ export const createAd = async (data: CreateAdData): Promise<Ad> => {
         location: data.location,
         rating: data.rating,
         reviews: data.reviews,
-        // FIX: Added missing 'condition' property to satisfy the 'Ad' type.
         condition: 'used',
+        categoryPath: ['Marketplaces'], // Add a default category for newly created ads
         createdAt: new Date().toISOString(),
         listingType: data.listingType,
         syncStatus: 'local',
